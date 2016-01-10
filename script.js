@@ -1,5 +1,6 @@
 // ==UserScript==
 // @include     *//ncore.cc
+// @include     *//ncore.cc/index.php
 // @include     *//ncore.cc/torrents.php*
 // @include     *//ncore.cc/hitnrun.php*
 // ==/UserScript==
@@ -31,7 +32,7 @@ document.getElementsByTagName('body')[0].style.display = 'none';
     function getDownloadButton(options) {
         var a   = $('<a/>'),
             img = $('<img/>', {
-                src : '//static.ncore.cc/styles/nspring/letoltve.gif'
+                src : 'https://cdn.rawgit.com/richrdkng/greasemonkey-ncore/master/img/arrow_square_green_16x16.png'
             }),
             opt,
             hrefAttr,
@@ -56,7 +57,7 @@ document.getElementsByTagName('body')[0].style.display = 'none';
 
             if (href) {
                 a.attr('href',  href);
-                a.attr('title', href);
+                a.attr('title', 'Download ' + href);
             }
 
             if (opt.class) {
@@ -137,13 +138,14 @@ document.getElementsByTagName('body')[0].style.display = 'none';
                         },
                         class : 'btn-download-torrent',
                         css   : {
-                            float  : 'left',
-                            margin : '0 10px 0 -4px'
+                            float         : 'left',
+                            'margin-left' : '-4px'
                         }
                     },
                     img : {
                         css : {
-                            height : '33px'
+                            margin : '4px 5px',
+                            height : '24px'
                         }
                     }
                 });
