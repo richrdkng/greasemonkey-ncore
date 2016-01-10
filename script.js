@@ -2,6 +2,9 @@
 // @include     *//ncore.cc/torrents.php*
 // ==/UserScript==
 
+// hide site until the script finished
+document.getElementsByTagName('body')[0].style.display = 'none';
+
 (function($) {
 
     function contains(str, lookFor) {
@@ -10,8 +13,24 @@
 
     $(function() {
 
+        // tidy up the top of the page
+        $('#div_body').children('div[id*="fej_"]').remove();
+
+        // look for <br> tags until they are added
+        var intID = setInterval(function() {
+            var br = $('#main_tartalom').children('br');
+
+            if (br.length > 0) {
+                br.remove();
+                clearInterval(intID);
+            }
+        }, 5);
+
         // delete "red infobar"
         $('.infocsik').remove();
+
+        // open "search panel"
+        $('#panel_stuff.panel_closed').click();
 
         // delete "yellow adblock warning bar"
         $('center').each(function() {
@@ -27,8 +46,8 @@
             }
         });
 
-        // open "search panel"
-        $('#panel_stuff.panel_closed').click();
+        // remove "middle ad bar"
+        $('center .banner').parent().remove();
 
         // replace "bookmark plus" buttons to "download torrent"
         $('.box_torrent').each(function() {
@@ -57,6 +76,12 @@
                 .after(downloadButton)
                 .remove();
         });
+
+        // remove empty "bottom row" of the page
+        $('#div_body_space').remove();
+
+        // show the page after all the changes ran
+        $('body').show();
     });
 
 })(jQuery);
