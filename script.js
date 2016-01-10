@@ -24,7 +24,7 @@ document.getElementsByTagName('body')[0].style.display = 'none';
                 br.remove();
                 clearInterval(intID);
             }
-        }, 5);
+        }, 0);
 
         // delete "red infobar"
         $('.infocsik').remove();
@@ -42,7 +42,6 @@ document.getElementsByTagName('body')[0].style.display = 'none';
                 contains(html, 'blokk')) {
 
                 self.remove();
-                return false;
             }
         });
 
