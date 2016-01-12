@@ -1,5 +1,5 @@
 // ==UserScript==
-// @include     *//ncore.cc
+// @include     *//ncore.cc/
 // @include     *//ncore.cc/index.php
 // @include     *//ncore.cc/torrents.php*
 // @include     *//ncore.cc/hitnrun.php*
@@ -9,6 +9,11 @@
 document.getElementsByTagName('body')[0].style.display = 'none';
 
 (function($) {
+
+    /**
+     * @const General timeout in milliseconds
+     */
+    var TIMEOUT = 15000;
 
     /**
      * Returns whether the string contains the given string to look for.
@@ -90,8 +95,7 @@ document.getElementsByTagName('body')[0].style.display = 'none';
         $('#div_body').children('div[id*="fej_"]').remove();
 
         // look for <br> tags until they are added
-        var timeout   = 10000, // milliseconds
-            startTime = Date.now(),
+        var startTime = Date.now(),
             intID     = setInterval(function() {
                 var br = $('#main_tartalom').children('br');
 
@@ -100,7 +104,8 @@ document.getElementsByTagName('body')[0].style.display = 'none';
                     clearInterval(intID);
                 }
 
-                if (Date.now() - startTime > timeout) {
+                if (Date.now() - startTime > TIMEOUT) {
+                    console.warn('Script timed out for <br>');
                     clearInterval(intID);
                 }
             }, 0);
@@ -127,9 +132,46 @@ document.getElementsByTagName('body')[0].style.display = 'none';
         // remove "middle ad bar"
         $('center .banner').parent().remove();
 
+        // remove ads from individual torrent dropdowns
+        $('.torrent_txt, .torrent_txt2').each(function() {
+            var link = $(this).find('a[href*="id"]');
+
+            link.on('click', function() {
+                if (!link.hasClass('opened-already')) {
+                    link.addClass('opened-already');
+
+                    var start = Date.now(),
+                        intID = setInterval(function() {
+
+                        var torrentID = /id=(\d+)/i.exec(link.attr('href'))[1],
+                            dropdown  = $('#' + torrentID),
+                            content   = dropdown.find('.torrent_lenyilo_tartalom'),
+                            pair;
+
+                        if (content.length) {
+                            pair = content.find('center + .hr_stuff');
+
+                            if (pair.length) {
+                                content.find('center > .banner').closest('center').remove();
+                                pair.remove();
+
+                                clearInterval(intID);
+                            }
+                        }
+
+                        if (Date.now() - start > TIMEOUT) {
+                            console.warn('Script timed out for link', link);
+                            clearInterval(intID);
+                        }
+                    }, 0);
+                }
+            });
+        });
+
         // replace "bookmark plus" buttons to "download torrent"
         $('.box_torrent').each(function() {
             var self           = $(this),
+                opacity        = .65,
                 bookmarkButton = self.find('div[class*="torrent_konyvjelzo"]'),
                 downloadButton = getDownloadButton({
                     a : {
@@ -139,7 +181,8 @@ document.getElementsByTagName('body')[0].style.display = 'none';
                         class : 'btn-download-torrent',
                         css   : {
                             float         : 'left',
-                            'margin-left' : '-4px'
+                            'margin-left' : '-4px',
+                            opacity       : opacity
                         }
                     },
                     img : {
@@ -149,6 +192,12 @@ document.getElementsByTagName('body')[0].style.display = 'none';
                         }
                     }
                 });
+
+            downloadButton.on('mouseover mouseout', function(e) {
+                downloadButton.css({
+                    opacity : e.type === 'mouseover' ? 1 : opacity
+                });
+            });
 
             bookmarkButton.replaceWith(downloadButton);
         });
