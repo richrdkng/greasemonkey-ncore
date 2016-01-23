@@ -54,7 +54,10 @@ document.getElementsByTagName('body')[0].style.display = 'none';
                 hrefAttr     = $(opt.href.element).attr('href');
                 hrefPattern  = /id=(\d+)/i;
                 hrefTemplate = '//ncore.cc/torrents.php?action=download&id=';
-                href         = hrefTemplate + hrefAttr.match(hrefPattern)[1];
+
+                if (hrefAttr) {
+                    href = hrefTemplate + hrefAttr.match(hrefPattern)[1];
+                }
 
             } else if (typeof opt.href === 'string') {
                 href = opt.href;
