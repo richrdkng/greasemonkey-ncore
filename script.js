@@ -5,9 +5,6 @@
 // @include     *//ncore.cc/hitnrun.php*
 // ==/UserScript==
 
-// hide site until the script finished
-document.getElementsByTagName('body')[0].style.display = 'none';
-
 (function($) {
 
     /**
@@ -146,27 +143,27 @@ document.getElementsByTagName('body')[0].style.display = 'none';
                     var start = Date.now(),
                         intID = setInterval(function() {
 
-                        var torrentID = /id=(\d+)/i.exec(link.attr('href'))[1],
-                            dropdown  = $('#' + torrentID),
-                            content   = dropdown.find('.torrent_lenyilo_tartalom'),
-                            pair;
+                            var torrentID = /id=(\d+)/i.exec(link.attr('href'))[1],
+                                dropdown  = $('#' + torrentID),
+                                content   = dropdown.find('.torrent_lenyilo_tartalom'),
+                                pair;
 
-                        if (content.length) {
-                            pair = content.find('center + .hr_stuff');
+                            if (content.length) {
+                                pair = content.find('center + .hr_stuff');
 
-                            if (pair.length) {
-                                content.find('center > .banner').closest('center').remove();
-                                pair.remove();
+                                if (pair.length) {
+                                    content.find('center > .banner').closest('center').remove();
+                                    pair.remove();
 
+                                    clearInterval(intID);
+                                }
+                            }
+
+                            if (Date.now() - start > TIMEOUT) {
+                                console.warn('Script timed out for link', link);
                                 clearInterval(intID);
                             }
-                        }
-
-                        if (Date.now() - start > TIMEOUT) {
-                            console.warn('Script timed out for link', link);
-                            clearInterval(intID);
-                        }
-                    }, 0);
+                        }, 0);
                 }
             });
         });
@@ -277,9 +274,6 @@ document.getElementsByTagName('body')[0].style.display = 'none';
 
         // remove empty "bottom row" of the page
         $('#div_body_space').remove();
-
-        // show the page after all the changes ran
-        $('body').show();
     });
 
 })(jQuery);
