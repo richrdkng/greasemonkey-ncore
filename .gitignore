@@ -1,5 +1,8 @@
-# WebStorm project folder
+# IntelliJ IDEA project folder
 .idea
+
+# Vagrant folder
+.vagrant
 
 # Logs
 logs
