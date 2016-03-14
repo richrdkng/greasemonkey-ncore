@@ -89,6 +89,154 @@
         return a.append(img);
     }
 
+    /**
+     * Determines by the given date and ranges, that the in what range the date is falling to
+     * and calls the handler function of that range.
+     *
+     * @param {Date} dateTime
+     */
+    function determineRangeCategoryByDate(dateTime, ranges) {
+        var getRangeCategory = function(date, ranges) {
+                var diff = (Date.now() - date) / (24 * 60 * 60 * 1000); // in days
+
+                for (var k in ranges) {
+                    var range = ranges[k].range;
+
+                    if (isBetweenRange(diff, range)) {
+                        ranges[k].handler.apply(null, [getRangePercent(diff, range)]);
+                        break;
+                    }
+                }
+            },
+            isBetweenRange = function(day, range) {
+                var pattern = /^(\d+)[\s-]*(\d+)$/,
+                    matches = range.match(pattern),
+                    min     = parseInt(matches ? matches[1] : null),
+                    max     = parseInt(matches ? matches[2] : null);
+
+                if (min === min && max === max) {
+                    return day >= min && day <= max;
+                }
+
+                return false;
+            },
+            getRangePercent = function(day, range) {
+                var pattern = /^(\d+)[\s-]*(\d+)$/,
+                    matches = range.match(pattern),
+                    min     = parseInt(matches ? matches[1] : null),
+                    max     = parseInt(matches ? matches[2] : null),
+                    scale,
+                    actual;
+
+                if (min === min && max === max) {
+                    scale  = max - min;
+                    actual = day - min;
+
+                    return actual / scale
+                }
+
+                return 0;
+            }
+
+        getRangeCategory(dateTime, ranges);
+    }
+
+    /**
+     * Returns the calculated color value between the 2 given colors determined by the percent.
+     * The color is returned in CSS hex color format (e.g.: #FFFFFF).
+     *
+     * @param {string|number} color1
+     * @param {string|number} color2
+     * @param {number}        percent
+     *
+     * @returns {string}
+     */
+    function getColorGradient(color1, color2, percent) {
+        var RED      = 1,
+            GREEN    = 2,
+            BLUE     = 3,
+
+            getColorComponent = function(hex, component) {
+                var pattern = /^#?(?:0x)?([\da-f]+)$/i,
+                    sanitized,
+                    matches;
+
+                if (typeof hex === 'string') {
+                    matches = hex.match(pattern);
+
+                    if (matches && matches[1]) {
+                        sanitized = parseInt(matches[1], 16);
+
+                        if (sanitized !== sanitized) {
+                            sanitized = null;
+                        }
+                    }
+
+                } else if (
+                    typeof hex === 'number' &&
+                    hex === hex &&
+                    hex >= 0 &&
+                    hex <= Infinity
+                ) {
+
+                    sanitized = hex;
+                }
+
+                if (sanitized !== null) {
+                    switch (component) {
+                        case RED:
+                            return sanitized >> 16 & 0xFF;
+
+                        case GREEN:
+                            return sanitized >> 8 & 0xFF;
+
+                        case BLUE:
+                            return sanitized & 0xFF;
+                    }
+                }
+
+                return 0;
+            },
+
+            getColorComponentGradient = function(colorComponent1, colorComponent2, percent) {
+                return colorComponent1 + Math.round((colorComponent2 - colorComponent1) * percent);
+            },
+
+            getHexComponent = function(colorComponent) {
+                var hexComponent;
+
+                if (colorComponent < 0) {
+                    colorComponent = 0;
+
+                } else if (colorComponent > 255) {
+                    colorComponent = 255;
+                }
+
+                hexComponent = colorComponent.toString(16);
+
+                if (colorComponent <= 0x0F) {
+                    hexComponent = '0' + hexComponent;
+                }
+
+                return hexComponent;
+            },
+
+            c1_red   = getColorComponent(color1, RED),
+            c1_green = getColorComponent(color1, GREEN),
+            c1_blue  = getColorComponent(color1, BLUE),
+            c2_red   = getColorComponent(color2, RED),
+            c2_green = getColorComponent(color2, GREEN),
+            c2_blue  = getColorComponent(color2, BLUE),
+            red      = getColorComponentGradient(c1_red, c2_red, percent),
+            green    = getColorComponentGradient(c1_green, c2_green, percent),
+            blue     = getColorComponentGradient(c1_blue, c2_blue, percent);
+
+        return '#' +
+            getHexComponent(red) +
+            getHexComponent(green) +
+            getHexComponent(blue);
+    }
+
     $(function() {
 
         // tidy up the top of the page
@@ -200,6 +348,93 @@
             });
 
             bookmarkButton.replaceWith(downloadButton);
+        });
+
+        // colorize dates
+        $('.box_torrent .box_feltoltve2').each(function() {
+            var container = $(this),
+                pattern   = /([\d-:]+)/g,
+                matches   = container.html().match(pattern),
+                ranges    = [
+                    {
+                        range   : '0 - 7', // days
+                        handler : function(percent) {
+                            var c1    = '#FFFFFF',
+                                c2    = '#FFFB8E',
+                                color = getColorGradient(c1, c2, percent);
+
+                            applyContainerStyle(container, {
+                                borderRightColor : color
+                            });
+                        }
+                    },
+                    {
+                        range : '8 - 14', // days
+                        handler : function(percent) {
+                            var c1    = '#FFFB8E',
+                                c2    = '#FFB728',
+                                color = getColorGradient(c1, c2, percent);
+
+                            applyContainerStyle(container, {
+                                borderRightColor : color
+                            });
+                        }
+                    },
+                    {
+                        range : '15 - 9999', // days
+                        handler : function(percent) {
+                            var c1    = '#FFB728',
+                                c2    = '#FF8989',
+                                color = getColorGradient(c1, c2, percent);
+
+                            applyContainerStyle(container, {
+                                borderRightColor : color
+                            });
+                        }
+                    }
+                ],
+                dateString,
+                timeString,
+                dateElement,
+                timeElement,
+                dateTime,
+
+                applyContainerStyle = function(container, customCSS) {
+                    container.css({
+                        width       : '78px',
+                        borderRight : '12px solid'
+                    });
+
+                    container.css(customCSS);
+                };
+
+            if (matches) {
+                if (matches[0] && matches[1]) {
+                    dateString = matches[0];
+                    timeString = matches[1];
+                    dateTime   = Date.parse(dateString + 'T' + timeString);
+
+                    determineRangeCategoryByDate(dateTime, ranges);
+
+                    dateElement = $('<span/>', {
+                        text : dateString,
+                        css  : {
+                            fontWeight : 'bold'
+                        }
+                    });
+
+                    timeElement = $('<span/>', {
+                        text : timeString,
+                        css  : {
+                            color    : '#BBB',
+                            fontSize : '9px'
+                        }
+                    });
+
+                    container.empty();
+                    container.append(dateElement, '<br>', timeElement);
+                }
+            }
         });
 
         // add "download torrent" button to HnR page
