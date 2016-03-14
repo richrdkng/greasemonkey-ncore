@@ -1,0 +1,12 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "hashicorp/precise32"
+  
+  # install "vagrant-hostsupdater" plugin for vagrant in order to work the line below properly
+  config.vm.hostname = "greasemonkey-ncore.local"
+  config.vm.network "private_network", ip: "192.168.41.125"
+  
+  config.vm.provision :shell, :path => "provision/provision.sh"
+end
